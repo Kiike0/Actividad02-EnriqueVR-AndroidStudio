@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="boton_ce">#D52222</color>
+    <color name="botones">#0090FF</color>
+    <color name="boton_igual">#0FB647</color>
+    <color name="my_light_primary">#FF5733</color>
+    <color name="my_dark_primary">#000000</color>
+    <color name="my_dark_background">#333333</color>
+    <color name="dark_gray">#576875</color>
+
+
+</resources>
