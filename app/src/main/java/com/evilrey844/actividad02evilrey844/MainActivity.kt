@@ -24,6 +24,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var buttondividir: Button
     private lateinit var buttonigual: Button
     private lateinit var buttonce: Button
+    private var numCompleto: Int = 0
+    private var numCondicion: Int = 0
     private var operacion: Char? = null
     private var reseteoPantalla = false // Para saber si se debe resetear de la operación
     private var calculo = Calculo(0, 0, 0, ' ') //Objeto calculo vacío
@@ -51,6 +53,9 @@ class MainActivity : AppCompatActivity() {
         buttonce = findViewById(R.id.buttonce)
 
 
+        /**
+         * Cada vez que pulsemos los botones se realiza una acción
+         */
         button1.setOnClickListener {
             setNumClicked(1); //Llamamos al metodo que hemos creado
         }
@@ -82,43 +87,56 @@ class MainActivity : AppCompatActivity() {
             setNumClicked(0);
         }
         buttonplus.setOnClickListener {
-            realizarOperacion('+')
+            asignarNum1(numCompleto)
+            asignarOperacion('+')
         }
         buttonmenos.setOnClickListener {
-            realizarOperacion('-')
+            asignarNum1(numCompleto)
+            asignarOperacion('-')
         }
         buttonmultiplicar.setOnClickListener {
-            realizarOperacion('*')
+            asignarNum1(numCompleto)
+            asignarOperacion('*')
         }
         buttondividir.setOnClickListener {
-            realizarOperacion('/')
+            asignarNum1(numCompleto)
+            asignarOperacion('/')
         }
+        /**
+         * El botón igual es el más complejo ya que realiza toda la operacion si se cumplen las condiciones correctas
+         */
         buttonigual.setOnClickListener {
-            if (operacion != null && textView.text.isNotEmpty()) {
-                /*
-                Antes de haber pulsado el igual, habremos insertado una operacion antes
-                y también la condicion de que no esté vacío el texto en pantalla
-                 */
-                calculo.num2 = textView.text.toString().toInt() //El numero Actual que sale en pantalla
-                calculo.operacion = operacion ?: ' ' // Si operacion es nulo, asignamos un valor predeterminado
-                calculo.calcular() //Llamamos al metodo calcular porque ya tendremos num1, num2 y la operacion
-                textView.text = calculo.resultado.toString() //Mostramos el resultado
-                operacion = null //Reseteamos que la operacion sea null
-                reseteoPantalla = true //Limpiamos la pantalla de los numeros anteriores
+            if (numCompleto == 0 || numCondicion ==textView.text.toString().toInt()) {
+                mostrarmensaje()
             } else {
-                Toast.makeText(
-                    applicationContext,
-                    "Debe introducir 2 números y una operación antes de calcular",
-                    Toast.LENGTH_SHORT
-                ).show()
+                if (numCondicion!=textView.text.toString().toInt()){ //Lo tenemos que volver a poner porque si no da problemas el programa
+                    asignarNum2(numCompleto) //El numero Actual que sale en pantalla
+                    calculo.operacion = operacion
+                        ?: ' ' // Te obliga el programa para que no de errores: si operacion es nulo, asignamos un valor predeterminado
+                    calculo.calcular() //Llamamos al metodo calcular porque ya tendremos num1, num2 y la operacion
+                    textView.text = calculo.resultado.toString() //Mostramos el resultado
+                    operacion = null //Reseteamos que la operacion sea null
+                    reseteoPantalla = true //Limpiamos la pantalla
+                    numCompleto = calculo.resultado //Por si queremos hacer mas operaciones lo guardamos en numResultado
+                    numCondicion=textView.text.toString().toInt() //Este codigo está escrito para que si pulsamos un * y luego un =
+                                                                    //sin pasar un número no de problemas la calculadora.
+                }
+
+
             }
         }
+        /**
+         * Al pulsar CE volvemos a reiniciar la calculadora
+         */
         buttonce.setOnClickListener {
             reiniciarCalculadora()
         }
 
     }
 
+    /**
+     * En este método insertamos los numeros según pulsemos los botones
+     */
     private fun setNumClicked(numero: Int) {
         if (reseteoPantalla) { //Si es true..
             textView.text = ""
@@ -127,25 +145,57 @@ class MainActivity : AppCompatActivity() {
 
         val numActual = textView.text.toString()
         val nuevoNum = "$numActual$numero"
-        textView.text = nuevoNum //Vamos añadiendo el numero hasta que se resete la pantalla al pulsar una operación
+        textView.text = nuevoNum
+        //Vamos añadiendo el numero hasta que se resete la pantalla al pulsar una operación
         //La cual la realizamos con el metodo realizarOperación
+        numCompleto = nuevoNum.toInt() //Y lo añadimos en numResultado
     }
 
-    private fun realizarOperacion(op: Char) {
+    /**
+     * En este método asignamos la operacion al char que hemos creado
+     */
+    private fun asignarOperacion(op: Char) {
         operacion = op //Cambiamos el valor del char
-        reseteoPantalla = true //reseteamos la pantalla para que funcione setNumClicked correctamente y se vea mejor también
-        calculo.num1 = textView.text.toString().toInt() // Actualiza num1 con los números que hemos ido insertando hasta pulsar la operación
-        //También vale para guardar lo que se vea en pantalla para más operaciones
-
+        reseteoPantalla =
+            true //reseteamos la pantalla para que funcione setNumClicked correctamente y se vea mejor también
     }
 
+    /**
+     * En este método asignamos el primer numero que vamos a utilizar en el cálculo
+     */
+    private fun asignarNum1(numero: Int) {
+        calculo.num1 =
+            numero // Actualiza num1 con los números que hemos ido insertando hasta pulsar la operación
+    }
+
+    /**
+     * En este método asignamos el segundo numero que vamos a utilizar en el cálculo
+     */
+    private fun asignarNum2(numero: Int) {
+        calculo.num2 =
+            numero // Actualiza num1 con los números que hemos ido insertando hasta pulsar la operación
+    }
+
+    /**
+     * Reiniciamos la calculadora y ponemos todos sus valores a 0 en este método
+     */
     private fun reiniciarCalculadora() { //Todos los valores se vuelven a 0 y la pantalla se limpia
         textView.text = ""
         operacion = ' '
         reseteoPantalla = true
+        numCompleto = 0
         calculo = Calculo(0, 0, 0, ' ')
     }
 
-
+    /**
+     * Mostramos el mensaje TOAST (emergente) si cumple la condición que le hemos pasado antes
+     */
+    private fun mostrarmensaje(){
+        Toast.makeText(
+            applicationContext,
+            "Debe introducir 2 números y una operación antes de calcular",
+            Toast.LENGTH_SHORT
+        ).show()
+    }
 
 }
