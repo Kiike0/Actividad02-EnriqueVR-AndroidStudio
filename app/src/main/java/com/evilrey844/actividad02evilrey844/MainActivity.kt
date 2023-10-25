@@ -5,195 +5,258 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import java.text.DecimalFormat
 
 class MainActivity : AppCompatActivity() {
     private lateinit var textView: TextView //Este parámetro servirá para modificar lo que aparece en textView
-    private lateinit var button0: Button //Este parámetro sirve para modificar la acción del botón
-    private lateinit var button1: Button
-    private lateinit var button2: Button
-    private lateinit var button3: Button
-    private lateinit var button4: Button
-    private lateinit var button5: Button
-    private lateinit var button6: Button
-    private lateinit var button7: Button
-    private lateinit var button8: Button
-    private lateinit var button9: Button
+    private lateinit var btnNum: ArrayList<Button> //Este parámetro sirve para modificar la acción del botón almacenados en la lista
     private lateinit var buttonplus: Button
     private lateinit var buttonmenos: Button
     private lateinit var buttonmultiplicar: Button
     private lateinit var buttondividir: Button
     private lateinit var buttonigual: Button
+    private lateinit var buttondelete : Button
     private lateinit var buttonce: Button
-    private var numCompleto: Int = 0
-    private var numCondicion: Int = 0
-    private var operacion: Char? = null
-    private var reseteoPantalla = false // Para saber si se debe resetear de la operación
-    private var calculo = Calculo(0, 0, 0, ' ') //Objeto calculo vacío
+    private var calculo = Calculo() //Objeto calculo vacío
+    private val df = DecimalFormat("#.##") //Formato decimal para trabajar con él
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         textView = findViewById(R.id.textView)
-        button0 = findViewById(R.id.button0)
-        button1 = findViewById(R.id.button1)
-        button2 = findViewById(R.id.button2)
-        button3 = findViewById(R.id.button3)
-        button4 = findViewById(R.id.button4)
-        button5 = findViewById(R.id.button5)
-        button6 = findViewById(R.id.button6)
-        button7 = findViewById(R.id.button7)
-        button8 = findViewById(R.id.button8)
-        button9 = findViewById(R.id.button9)
+
         buttonplus = findViewById(R.id.buttonplus)
         buttonmenos = findViewById(R.id.buttonmenos)
         buttonmultiplicar = findViewById(R.id.buttonmultiplicar)
         buttondividir = findViewById(R.id.buttondividir)
         buttonigual = findViewById(R.id.buttonigual)
         buttonce = findViewById(R.id.buttonce)
+        buttondelete = findViewById(R.id.buttondelete)
+
+        textView.text = ""
 
 
         /**
          * Cada vez que pulsemos los botones se realiza una acción
+         * es lo mismo de los operadores, pero los botones están almacenados
+         * en una función para mejorar la optimización
          */
-        button1.setOnClickListener {
-            setNumClicked(1); //Llamamos al metodo que hemos creado
+        inicializaBtnNum()
+
+        /**
+         * Llamamos al método creado para que se realicen los eventos
+         */
+        inicializaListeners()
+
+    }
+
+    /**
+     * En este método se almacena en el array los findViewbyID de cada número
+     * para llamarlos desde el OnCreate
+     */
+
+    private fun inicializaBtnNum() {
+        btnNum = ArrayList()
+        btnNum.add(findViewById(R.id.button0))
+        btnNum.add(findViewById(R.id.button1))
+        btnNum.add(findViewById(R.id.button2))
+        btnNum.add(findViewById(R.id.button3))
+        btnNum.add(findViewById(R.id.button4))
+        btnNum.add(findViewById(R.id.button5))
+        btnNum.add(findViewById(R.id.button6))
+        btnNum.add(findViewById(R.id.button7))
+        btnNum.add(findViewById(R.id.button8))
+        btnNum.add(findViewById(R.id.button9))
+        btnNum.add(findViewById(R.id.buttondec))
+    }
+
+    /**
+     * Establecemos los eventos para que cada vez que pulsemos los botones realice una acción
+     */
+    private fun inicializaListeners() {
+        for (i in 0..<btnNum.count()) { //Usamos el for para recorrer la lista de botones
+            btnNum[i].setOnClickListener { setNumClicked(i) }
         }
-        button2.setOnClickListener {
-            setNumClicked(2);
-        }
-        button3.setOnClickListener {
-            setNumClicked(3);
-        }
-        button4.setOnClickListener {
-            setNumClicked(4);
-        }
-        button5.setOnClickListener {
-            setNumClicked(5);
-        }
-        button6.setOnClickListener {
-            setNumClicked(6);
-        }
-        button7.setOnClickListener {
-            setNumClicked(7);
-        }
-        button8.setOnClickListener {
-            setNumClicked(8);
-        }
-        button9.setOnClickListener {
-            setNumClicked(9);
-        }
-        button0.setOnClickListener {
-            setNumClicked(0);
-        }
+
         buttonplus.setOnClickListener {
-            asignarNum1(numCompleto)
             asignarOperacion('+')
+            calculo.boolOperacion = true //Señalamos que ya hay una operación en curso
+
         }
         buttonmenos.setOnClickListener {
-            asignarNum1(numCompleto)
             asignarOperacion('-')
+            calculo.boolOperacion = true
         }
         buttonmultiplicar.setOnClickListener {
-            asignarNum1(numCompleto)
             asignarOperacion('*')
+            calculo.boolOperacion = true
         }
         buttondividir.setOnClickListener {
-            asignarNum1(numCompleto)
             asignarOperacion('/')
+            calculo.boolOperacion = true
         }
+
         /**
          * El botón igual es el más complejo ya que realiza toda la operacion si se cumplen las condiciones correctas
+         * por ello creamos un método que llame al ser pulsado el igual
          */
-        buttonigual.setOnClickListener {
-            if (numCompleto == 0 || numCondicion ==textView.text.toString().toInt()) {
-                mostrarmensaje()
-            } else {
-                if (numCondicion!=textView.text.toString().toInt()){ //Lo tenemos que volver a poner porque si no da problemas el programa
-                    asignarNum2(numCompleto) //El numero Actual que sale en pantalla
-                    calculo.operacion = operacion
-                        ?: ' ' // Te obliga el programa para que no de errores: si operacion es nulo, asignamos un valor predeterminado
-                    calculo.calcular() //Llamamos al metodo calcular porque ya tendremos num1, num2 y la operacion
-                    textView.text = calculo.resultado.toString() //Mostramos el resultado
-                    operacion = null //Reseteamos que la operacion sea null
-                    reseteoPantalla = true //Limpiamos la pantalla
-                    numCompleto = calculo.resultado //Por si queremos hacer mas operaciones lo guardamos en numResultado
-                    numCondicion=textView.text.toString().toInt() //Este codigo está escrito para que si pulsamos un * y luego un =
-                                                                    //sin pasar un número no de problemas la calculadora.
-                }
-
-
-            }
-        }
+        buttonigual.setOnClickListener { resultClicked() }
         /**
          * Al pulsar CE volvemos a reiniciar la calculadora
          */
-        buttonce.setOnClickListener {
-            reiniciarCalculadora()
-        }
-
+        buttonce.setOnClickListener { reiniciarCalculadora() }
+        /**
+         * Al pulsar < borramos el último número si hay en la calculadora
+         */
+        buttondelete.setOnClickListener { borrarNum() }
     }
 
     /**
      * En este método insertamos los numeros según pulsemos los botones
+     * @param entero del número pulsado del 1 al 9 o 10 si se ha pulsado decimal
      */
     private fun setNumClicked(numero: Int) {
-        if (reseteoPantalla) { //Si es true..
-            textView.text = ""
-            reseteoPantalla = false
-        }
+        calculo.setDigito(numero)
 
-        val numActual = textView.text.toString()
-        val nuevoNum = "$numActual$numero"
-        textView.text = nuevoNum
-        //Vamos añadiendo el numero hasta que se resete la pantalla al pulsar una operación
-        //La cual la realizamos con el metodo realizarOperación
-        numCompleto = nuevoNum.toInt() //Y lo añadimos en numResultado
+        //Mostramos info actualizada en los TextView de la app
+        if (calculo.reseteoPantalla) {
+            muestraValor(calculo.num1)
+        } else {
+            muestraValor(calculo.num2)
+        }
     }
 
     /**
      * En este método asignamos la operacion al char que hemos creado
+     * @param el char que le pasamos según la operación que hemos pulsado
      */
     private fun asignarOperacion(op: Char) {
-        operacion = op //Cambiamos el valor del char
-        reseteoPantalla =
-            true //reseteamos la pantalla para que funcione setNumClicked correctamente y se vea mejor también
+        if (calculo.reseteoPantalla) {
+            //Acciones cuando estamos introduciendo el primer número.
+
+            if (calculo.operacion != ' ' && calculo.num1 == "") {
+                //Almacenamos el resultado anterior en el num1 para el siguiente cálculo.
+                calculo.num1 = df.format(calculo.resultado).toString()
+            }
+
+            //Asignamos el operador pasado por parámetro al objeto calculo, mostramos info en pantalla y actualizamos los datos
+            calculo.operacion = op
+            muestraValor(calculo.operacion.toString())
+            calculo.num2 = ""
+            calculo.reseteoPantalla = false
+        } else if (calculo.num2 == "") {
+            //Si se introduce una operación y no existe el segundo número la nueva operación reemplaza la anterior.
+
+            calculo.operacion = op
+            //Actualizamos la pantalla.
+            muestraValor(calculo.operacion.toString())
+        } else {
+            calculo.calcular()
+
+            //Mostramos en pantalla el resultado
+            muestraValor(df.format(calculo.resultado).toString())
+
+            //Actualizamos las características del objeto calculo, para seguir realizando operaciones
+            calculo.num1 = df.format(calculo.resultado).toString()
+            calculo.operacion = op
+            calculo.num2 = ""
+        }
+        calculo.boolOperacion = true //Señalamos que ya hay una operación en curso
+
+    }
+
+
+    /**
+     * El botón igual es el más complejo, este método realiza la acción al pulsar el botón
+     * y si al pulsar el operador alguno de los números está vacío, te muestra el mensaje de error
+     * con el toast llamando a mostrar Mensaje
+     */
+    private fun resultClicked(){
+        if (!calculo.reseteoPantalla && calculo.num2 != "") {
+
+            calculo.calcular()
+
+            //Mostramos en pantalla el resultado
+            muestraValor(df.format(calculo.resultado).toString())
+
+            //Actualizamos los datos en calculo.
+            calculo.num1=""
+            calculo.num2=""
+            calculo.operacion=' '
+            calculo.reseteoPantalla=true
+            calculo.boolResultado =true //Se introduce en el programa para mejorar el funcionamiento de DELETE
+        } else {
+            mostrarmensaje("Debe introducir 2 números y una operación para mostrar un resultado")
+        }
     }
 
     /**
-     * En este método asignamos el primer numero que vamos a utilizar en el cálculo
+     * Acciones a realizar al pulsar el botón <.
+     * Solo se ejecutará si hay número en pantalla si no, dará un mensaje de error.
+     * Borra el último número pulsado y el último operador pulsado, si se llega a el después
+     * de borrar num2
+     * Además dará un mensaje de error si hay un resultado en pantalla, ya que no queremos borrar
+     * el resultado
      */
-    private fun asignarNum1(numero: Int) {
-        calculo.num1 =
-            numero // Actualiza num1 con los números que hemos ido insertando hasta pulsar la operación
+    private fun borrarNum(){
+        if (calculo.num1.isEmpty()&&!calculo.boolResultado) {
+            mostrarmensaje("No existe nada para borrar") //Si no hay nada para borrar salta este error
+            //Además inicializamos las características del objeto calc. para solucionar posibles errores
+            reiniciarCalculadora()
+
+        } else if (calculo.num1.isNotEmpty() && !calculo.boolOperacion && !calculo.boolResultado) {
+            calculo.num1 =
+                calculo.num1.dropLast(1) //Eliminamos el último número llamando a dropLast
+            muestraValor(calculo.num1)
+
+            //Seguimos borrando hasta borrarlo todo, borramos el operador
+        } else if (calculo.num2.isEmpty() && !calculo.boolResultado) {
+            calculo.operacion = ' ' //Reiniciamos el valor de la operación
+            muestraValor("")
+            calculo.boolOperacion = false //indicamos que ya no hay operador
+
+        } else if (calculo.num2.isNotEmpty() && !calculo.boolResultado) {
+            //Hacemos lo mismo de num1 pero con num2
+            calculo.num2 = calculo.num2.dropLast(1)
+            muestraValor(calculo.num2)
+
+        } else {
+            //Si se ha pulsado el igual sale el mensaje de Error llamando al método donde está el Toast
+            mostrarmensaje("No existe nada para borrar")
+        }
     }
 
     /**
-     * En este método asignamos el segundo numero que vamos a utilizar en el cálculo
+     * Mostramos la información en componentest TextView textPantalla.
+     *
+     * @param pantalla info a mostrar en textView
      */
-    private fun asignarNum2(numero: Int) {
-        calculo.num2 =
-            numero // Actualiza num1 con los números que hemos ido insertando hasta pulsar la operación
+    private fun muestraValor(pantalla: String) {
+        textView.text = getString(R.string.textPantalla, pantalla)
     }
 
     /**
      * Reiniciamos la calculadora y ponemos todos sus valores a 0 en este método
      */
     private fun reiniciarCalculadora() { //Todos los valores se vuelven a 0 y la pantalla se limpia
-        textView.text = ""
-        operacion = ' '
-        reseteoPantalla = true
-        numCompleto = 0
-        calculo = Calculo(0, 0, 0, ' ')
+        muestraValor("")
+        calculo.reseteoPantalla = true
+        calculo.num1 = ""
+        calculo.num2 = ""
+        calculo.resultado = 0F
+        calculo.operacion = ' '
+        calculo.boolOperacion = false
+        calculo.boolResultado = false
     }
 
     /**
      * Mostramos el mensaje TOAST (emergente) si cumple la condición que le hemos pasado antes
      */
-    private fun mostrarmensaje(){
+    private fun mostrarmensaje(mensaje : String){
         Toast.makeText(
             applicationContext,
-            "Debe introducir 2 números y una operación antes de calcular",
+            mensaje,
             Toast.LENGTH_SHORT
         ).show()
     }
